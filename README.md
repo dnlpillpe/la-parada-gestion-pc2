@@ -5,7 +5,7 @@ Aplicación web académica (PC2 · Proyecto Final de Carrera III · USIL 2026-2)
 Todos los datos son **ficticios**.
 
 - Producción: https://la-parada-gestion-pc2.vercel.app (Vercel, rama `main`)
-- Backlog Scrum: proyecto Jira `LPG` (https://matiosystem.atlassian.net/jira/software/projects/LPG/boards/3)
+- Backlog Scrum: proyecto Jira `LPG` (https://henrypillpe-pc2.atlassian.net/jira/software/projects/LPG/boards/1)
 
 ## Recorrido de demostración
 
