@@ -4,10 +4,13 @@
   "description": "La Parada | Gestión Mayorista — registro de comerciantes, trazabilidad sanitaria y turnos de estibaje (PC2 PFC III USIL, datos ficticios)",
   "private": true,
   "type": "module",
-  "engines": { "node": "22.x" },
+  "engines": {
+    "node": "22.x"
+  },
   "scripts": {
     "start": "node scripts/dev-server.js",
     "build": "node scripts/build-check.js",
+    "pretest": "node scripts/check-test-db.js",
     "test": "node --test --test-concurrency=1 test/*.test.js",
     "db:migrate": "node scripts/migrate.js",
     "audit": "npm audit --omit=dev --audit-level=high"

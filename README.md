@@ -34,16 +34,39 @@ En una transacción: `SELECT … WHERE status='EN_COLA' ORDER BY arrived_at, id 
 (toma la más antigua y la bloquea), elige estibador por rotación, `UPDATE … WHERE id=$1 AND status='EN_COLA'`
 (si no actualiza exactamente 1 fila → 409) e inserta en `assignments`, cuya restricción `UNIQUE(request_id)` es la última barrera.
 
+La asignación por ID (`POST /api/requests/{id}/assign`) respeta el mismo orden de llegada: si existe una solicitud
+más antigua en cola, responde 409 y no modifica ninguna de las dos.
+
 ## Ejecutar en local
 
+La aplicación usa `DATABASE_URL` (archivo `.env`, ver `.env.example`).
+
 ```bash
-cp .env.example .env            # ajuste DATABASE_URL
-docker run -d --name lpg-pg -e POSTGRES_PASSWORD=postgres -e POSTGRES_DB=laparada_test -p 55432:5432 postgres:16-alpine
 npm ci
-npm run db:migrate              # esquema + datos demo
+npm run db:migrate              # esquema + datos demo sobre DATABASE_URL
 npm start                       # http://localhost:3000
-npm test                        # 13 pruebas (usa TEST_DATABASE_URL o postgres://postgres:postgres@localhost:55432/laparada_test)
 ```
+
+## Pruebas automatizadas (base de datos desechable)
+
+Las pruebas **borran y recrean el esquema `public`**. Por eso solo se ejecutan sobre una base PostgreSQL dedicada,
+indicada en `TEST_DATABASE_URL`. Nunca se usa `DATABASE_URL`. Si `TEST_DATABASE_URL` falta, no es local, no termina en
+`_test` o coincide con `DATABASE_URL`, `npm test` se detiene antes de conectarse (`scripts/check-test-db.js` y
+`test/test-db.js`).
+
+Windows (PowerShell), con un contenedor desechable:
+
+```powershell
+docker run -d --rm --name lpg-test-db -e POSTGRES_PASSWORD=postgres -e POSTGRES_DB=laparada_test -p 55432:5432 postgres:16-alpine
+$env:TEST_DATABASE_URL = "postgres://postgres:postgres@localhost:55432/laparada_test"
+npm test
+docker stop lpg-test-db
+```
+
+Linux o macOS: `TEST_DATABASE_URL=postgres://postgres:postgres@localhost:55432/laparada_test npm test`
+
+La suite tiene 16 pruebas: flujo principal, orden de llegada (también por ID), duplicados y concurrencia,
+autorización, autenticación y el aislamiento de la base de pruebas.
 
 ## Ramas y despliegue
 
