@@ -1,0 +1,114 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>La Parada | Gestión Mayorista</title>
+  <link rel="stylesheet" href="/styles.css">
+  <script type="module" src="/app.js"></script>
+</head>
+<body>
+  <header class="top">
+    <div>
+      <h1>La Parada <span>| Gestión Mayorista</span></h1>
+      <p class="sub">Registro de comerciantes · Trazabilidad sanitaria · Turnos de estibaje — datos 100 % ficticios</p>
+    </div>
+    <div id="who" class="who" hidden>
+      <span id="who-name"></span>
+      <button id="logout" class="ghost">Cerrar sesión</button>
+    </div>
+  </header>
+
+  <main>
+    <section id="login-view" class="card narrow" hidden>
+      <h2>Ingreso del operador</h2>
+      <form id="login-form">
+        <label>Usuario <input name="username" autocomplete="username" required></label>
+        <label>Contraseña <input name="password" type="password" autocomplete="current-password" required></label>
+        <button type="submit">Iniciar sesión</button>
+      </form>
+      <p class="hint">Las escrituras se autorizan en el servidor con una sesión firmada (cookie HttpOnly).</p>
+    </section>
+
+    <section id="app-view" hidden>
+      <nav class="tabs">
+        <button data-tab="comerciantes" class="active">1. Comerciantes y puestos</button>
+        <button data-tab="lotes">2. Lotes y revisión sanitaria</button>
+        <button data-tab="estibaje">3. Turnos de estibaje</button>
+        <button data-tab="historial">4. Historial</button>
+      </nav>
+
+      <div id="tab-comerciantes" class="tab">
+        <div class="grid2">
+          <form id="merchant-form" class="card">
+            <h3>Registrar comerciante <small>LPG-7</small></h3>
+            <label>Nombre / razón social <input name="full_name" required maxlength="120"></label>
+            <label>Documento (DNI 8 o RUC 11) <input name="document" required pattern="\d{8}(\d{3})?"></label>
+            <label>Rubro
+              <select name="category"><option>Frutas</option><option>Verduras</option><option>Tubérculos</option><option>Abarrotes</option></select>
+            </label>
+            <button type="submit">Guardar comerciante</button>
+          </form>
+          <form id="stall-form" class="card">
+            <h3>Registrar puesto <small>LPG-8</small></h3>
+            <label>Comerciante <select name="merchant_id" id="stall-merchant" required></select></label>
+            <label>Código de puesto <input name="code" required maxlength="20" placeholder="A-015"></label>
+            <label>Pabellón <input name="pavilion" required maxlength="60" placeholder="Pabellón A"></label>
+            <button type="submit">Guardar puesto</button>
+          </form>
+        </div>
+        <div class="card"><h3>Comerciantes registrados <small>LPG-11</small></h3><table id="merchants-table"></table></div>
+      </div>
+
+      <div id="tab-lotes" class="tab" hidden>
+        <form id="lot-form" class="card">
+          <h3>Registrar lote de alimentos <small>LPG-9 · LPG-10</small></h3>
+          <div class="row">
+            <label>Puesto <select name="stall_id" class="stall-select" required></select></label>
+            <label>Producto <input name="product" required maxlength="80" placeholder="Papa amarilla"></label>
+            <label>Cantidad <input name="quantity" type="number" step="0.01" min="0.01" required></label>
+            <label>Unidad <select name="unit"><option>kg</option><option>t</option><option>saco</option><option>caja</option><option>jaba</option></select></label>
+            <label>Fecha de ingreso <input name="received_on" type="date" required></label>
+            <label>Revisión sanitaria
+              <select name="sanitary_status"><option>PENDIENTE</option><option>APROBADO</option><option>OBSERVADO</option><option>RECHAZADO</option></select>
+            </label>
+          </div>
+          <button type="submit">Guardar lote</button>
+        </form>
+        <div class="card">
+          <h3>Lotes <small>LPG-12</small>
+            <select id="lot-filter"><option value="">Todos los estados</option><option>PENDIENTE</option><option>APROBADO</option><option>OBSERVADO</option><option>RECHAZADO</option></select>
+          </h3>
+          <table id="lots-table"></table>
+        </div>
+      </div>
+
+      <div id="tab-estibaje" class="tab" hidden>
+        <div class="grid2">
+          <form id="request-form" class="card">
+            <h3>Nueva solicitud de estibaje <small>LPG-13</small></h3>
+            <label>Puesto <select name="stall_id" class="stall-select" required></select></label>
+            <label>Descripción <input name="description" required maxlength="160" placeholder="Descarga de 40 sacos de papa"></label>
+            <button type="submit">Registrar solicitud</button>
+          </form>
+          <div class="card">
+            <h3>Asignar turno <small>LPG-14 · LPG-15</small></h3>
+            <p>Asigna la solicitud <b>más antigua en cola</b> al estibador que lleva más tiempo sin turno. Una solicitud nunca se asigna dos veces.</p>
+            <button id="assign-next" class="big">Asignar siguiente turno</button>
+            <div id="porters" class="porters"></div>
+          </div>
+        </div>
+        <div class="card"><h3>Cola y solicitudes</h3><table id="requests-table"></table></div>
+      </div>
+
+      <div id="tab-historial" class="tab" hidden>
+        <div class="card"><h3>Historial de asignaciones <small>LPG-16</small> <button id="reload-history" class="ghost">Actualizar</button></h3>
+          <table id="history-table"></table>
+        </div>
+      </div>
+    </section>
+  </main>
+  <div id="toast" role="status" aria-live="polite"></div>
+  <footer>PC2 · Proyecto Final de Carrera III · USIL 2026-2 · Solución académica con datos ficticios</footer>
+</body>
+</html>
