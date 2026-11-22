@@ -1,14 +1,17 @@
 // Utilidades de prueba: base PostgreSQL limpia + servidor HTTP real en puerto aleatorio.
+// La base se valida con resolveTestDatabaseUrl() antes de crear el pool o ejecutar SQL.
 import { getPool, ensureMigrated, closePool } from '../lib/db.js';
 import { hashPassword } from '../lib/auth.js';
 import { createServer } from '../scripts/dev-server.js';
+import { resolveTestDatabaseUrl } from './test-db.js';
 
 export const TEST_USER = 'operador.test';
 export const TEST_PASS = 'clave-de-prueba-solo-ci';
 
 export async function setup() {
-  process.env.DATABASE_URL = process.env.TEST_DATABASE_URL || process.env.DATABASE_URL
-    || 'postgres://postgres:postgres@localhost:55432/laparada_test';
+  // Lanza un error, sin conectarse, si falta TEST_DATABASE_URL o si el destino no es una base de pruebas local.
+  const testUrl = resolveTestDatabaseUrl(process.env);
+  process.env.DATABASE_URL = testUrl; // lib/db.js lee DATABASE_URL: se fuerza a la base de pruebas validada.
   const db = getPool();
   await db.query('DROP SCHEMA IF EXISTS public CASCADE; CREATE SCHEMA public;');
   await ensureMigrated();

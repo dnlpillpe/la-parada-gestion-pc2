@@ -40,6 +40,8 @@ jobs:
         run: npm ci
       - name: Build
         run: npm run build
+      - name: Validar base de pruebas (solo local y *_test)
+        run: node scripts/check-test-db.js
       - name: Pruebas unitarias e integración (PostgreSQL real)
         run: |
           node --test --test-concurrency=1 \
