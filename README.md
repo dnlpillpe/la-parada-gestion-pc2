@@ -4,8 +4,8 @@ Aplicación web académica (PC2 · Proyecto Final de Carrera III · USIL 2026-2)
 *La Parada*: **comercio sin registro**, **falta de trazabilidad sanitaria** y **asignación informal del estibaje**.
 Todos los datos son **ficticios**.
 
-- Producción: ver enlace en el informe (Vercel, rama `main`)
-- Backlog Scrum: proyecto Jira `LPG`
+- Producción: https://la-parada-gestion-pc2.vercel.app (Vercel, rama `main`)
+- Backlog Scrum: proyecto Jira `LPG` (https://matiosystem.atlassian.net/jira/software/projects/LPG/boards/3)
 
 ## Recorrido de demostración
 
