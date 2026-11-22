@@ -1,0 +1,100 @@
+name: CI-CD La Parada
+
+on:
+  push:
+    branches: [main, test]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build-test:
+    name: Build y pruebas automatizadas
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: laparada_test
+        ports: ['5432:5432']
+        options: >-
+          --health-cmd "pg_isready -U postgres" --health-interval 5s --health-timeout 5s --health-retries 10
+    env:
+      # Base efímera del runner, solo para pruebas (no es un secreto de producción).
+      TEST_DATABASE_URL: postgres://postgres:postgres@localhost:5432/laparada_test
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - name: Instalar dependencias (lockfile)
+        run: npm ci
+      - name: Build
+        run: npm run build
+      - name: Pruebas unitarias e integración (PostgreSQL real)
+        run: |
+          node --test --test-concurrency=1 \
+            --test-reporter=spec --test-reporter-destination=stdout \
+            --test-reporter=junit --test-reporter-destination=test-results.xml \
+            test/*.test.js
+      - name: Resumen de pruebas
+        if: always()
+        run: |
+          python3 - <<'EOF' >> "$GITHUB_STEP_SUMMARY"
+          import xml.etree.ElementTree as ET
+          r = ET.parse('test-results.xml').getroot()
+          cases = list(r.iter('testcase'))
+          failed = [c for c in cases if c.find('failure') is not None]
+          print(f"## Pruebas automatizadas: {len(cases)-len(failed)}/{len(cases)} OK\n")
+          print("| Prueba | Resultado |\n|---|---|")
+          for c in cases:
+              print(f"| {c.get('name')} | {'❌' if c.find('failure') is not None else '✅'} |")
+          EOF
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: resultados-pruebas
+          path: test-results.xml
+
+  security:
+    name: Seguridad (SCA, SAST, secretos)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - name: SCA - npm audit (falla con vulnerabilidades altas o críticas)
+        run: npm audit --audit-level=high
+      - name: Secretos - Gitleaks (historial completo)
+        run: |
+          docker run --rm -v "$PWD:/repo" ghcr.io/gitleaks/gitleaks:v8.24.3 \
+            git /repo --redact --verbose --exit-code 1
+      - name: SAST - Semgrep (reglas JavaScript/Node y secretos)
+        run: |
+          docker run --rm -v "$PWD:/src" -w /src semgrep/semgrep:1.119.0 \
+            semgrep scan --config p/javascript --config p/nodejsscan --config p/secrets \
+            --error --metrics=off --exclude test
+
+  production-gate:
+    name: Puerta de producción
+    needs: [build-test, security]
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    steps:
+      - run: |
+          echo "Build, pruebas y seguridad en verde para ${GITHUB_SHA}." | tee -a "$GITHUB_STEP_SUMMARY"
+          echo "Vercel promueve este commit de main a producción solo cuando estos checks pasan (Deployment Checks)." | tee -a "$GITHUB_STEP_SUMMARY"
