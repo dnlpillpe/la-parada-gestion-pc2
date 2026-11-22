@@ -3,9 +3,9 @@ import http from 'node:http';
 import { readFile } from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import handler from './lib/app.js';
+import handler from '../lib/app.js';
 
-const pub = path.join(path.dirname(fileURLToPath(import.meta.url)), 'public');
+const pub = path.join(path.dirname(fileURLToPath(import.meta.url)), '..', 'public');
 const types = { '.html': 'text/html; charset=utf-8', '.js': 'text/javascript', '.css': 'text/css', '.svg': 'image/svg+xml' };
 
 export function createServer() {

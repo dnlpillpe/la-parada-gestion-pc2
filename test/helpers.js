@@ -1,7 +1,7 @@
 // Utilidades de prueba: base PostgreSQL limpia + servidor HTTP real en puerto aleatorio.
 import { getPool, ensureMigrated, closePool } from '../lib/db.js';
 import { hashPassword } from '../lib/auth.js';
-import { createServer } from '../server.js';
+import { createServer } from '../scripts/dev-server.js';
 
 export const TEST_USER = 'operador.test';
 export const TEST_PASS = 'clave-de-prueba-solo-ci';

@@ -6,7 +6,7 @@
   "type": "module",
   "engines": { "node": ">=20" },
   "scripts": {
-    "start": "node server.js",
+    "start": "node scripts/dev-server.js",
     "build": "node scripts/build-check.js",
     "test": "node --test --test-concurrency=1 test/*.test.js",
     "db:migrate": "node scripts/migrate.js",
