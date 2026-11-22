@@ -48,8 +48,12 @@ npm test                        # 13 pruebas (usa TEST_DATABASE_URL o postgres:/
 ## Ramas y despliegue
 
 - `test`: integración. Cada push ejecuta el pipeline y Vercel genera un despliegue *preview*.
-- `main`: producción. Solo recibe cambios por Pull Request desde `test`; el despliegue de producción depende de que pasen
-  **Build y pruebas** y **Seguridad**.
+- `main`: producción. Solo recibe cambios por Pull Request desde `test`.
+- Puerta de producción en dos niveles:
+  1. **Protección de rama `main` (GitHub):** PR obligatorio y checks requeridos «Build y pruebas automatizadas» y
+     «Seguridad (SCA, SAST, secretos)», con la rama actualizada y sin excepción para administradores.
+  2. **Deployment Checks (Vercel):** un despliegue de `main` solo se promueve a producción cuando los checks
+     «Build y pruebas automatizadas», «Seguridad (SCA, SAST, secretos)» y «Puerta de producción» terminan en verde.
 
 ## Variables de entorno
 
