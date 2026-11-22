@@ -135,3 +135,26 @@ test('LPG-14: asignación explícita de una solicitud en cola devuelve la solici
   assert.equal(a.data.id, r.data.id);
   assert.equal(a.data.status, 'ASIGNADA');
 });
+
+test('LPG-14: asignar por ID la segunda solicitud se rechaza y respeta el orden de llegada', async () => {
+  const pendientes = async () => (await env.db.query(`SELECT count(*)::int n FROM stowage_requests WHERE status = 'EN_COLA'`)).rows[0].n;
+  assert.equal(await pendientes(), 0, 'la cola parte vacía');
+  const r1 = await call(env.base, '/api/requests', { method: 'POST', cookie, body: { stall_id: stallId, description: 'Llega primero (FIFO por ID)' } });
+  const r2 = await call(env.base, '/api/requests', { method: 'POST', cookie, body: { stall_id: stallId, description: 'Llega segundo (FIFO por ID)' } });
+
+  const salto = await call(env.base, `/api/requests/${r2.data.id}/assign`, { method: 'POST', cookie });
+  assert.equal(salto.status, 409);
+  assert.match(salto.data.error, /orden de llegada/);
+  const estados = (await env.db.query('SELECT id, status, porter_id FROM stowage_requests WHERE id = ANY($1) ORDER BY id', [[r1.data.id, r2.data.id]])).rows;
+  assert.deepEqual(estados.map((e) => e.status), ['EN_COLA', 'EN_COLA'], 'ambas siguen pendientes');
+  assert.ok(estados.every((e) => e.porter_id === null));
+  const asignaciones = (await env.db.query('SELECT count(*)::int n FROM assignments WHERE request_id = ANY($1)', [[r1.data.id, r2.data.id]])).rows[0].n;
+  assert.equal(asignaciones, 0, 'no se registró ninguna asignación');
+
+  // El flujo normal asigna primero la más antigua y luego la siguiente.
+  const a1 = await call(env.base, '/api/requests/assign-next', { method: 'POST', cookie });
+  assert.equal(a1.data.id, r1.data.id);
+  const a2 = await call(env.base, `/api/requests/${r2.data.id}/assign`, { method: 'POST', cookie });
+  assert.equal(a2.status, 200, 'cuando ya es la más antigua, la asignación por ID procede');
+  assert.equal(a2.data.id, r2.data.id);
+});
